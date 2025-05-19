@@ -2,6 +2,7 @@ from typing import *
 from dataclasses import dataclass
 from PyQt6.QtCore import QRect
 from GenericPackage.IO.FileIO import SaveAndLoad_Binary
+from typeguard import check_type
 class Point():
     """
     アーチェリー用の得点クラス
@@ -57,10 +58,29 @@ class PointList(list):
         else:
             raise TypeError(f"pointはint型またはPoint型で指定してください。指定された値:{object} 型:{type(object).__name__}")
 @dataclass(slots=True)
-class SoftWereSetting(SaveAndLoad_Binary):
+class SoftwareSetting(SaveAndLoad_Binary):
     """
     ソフトウェアの設定を保存するクラス
     """
     LastWindowGeometry:Optional[QRect]=None
+    IsWindowMaximum:bool=False
     def _init_value(self) -> None:
         LastWindowGeometry=None
+        IsWindowMaximum=False
+    def set_setting_value(self,settingName:str,value:Any)->None:
+        """
+        設定の値を更新する。
+        """
+        if not hasattr(self,settingName):
+            raise AttributeError(f"{self.__class__.__name__}に{settingName}という属性は存在しません。")
+        if not isinstance(value,self.__annotations__[settingName]):
+            if not check_type(value,self.__annotations__[settingName]):
+                raise TypeError(f"{self.__class__.__name__}の{settingName}の型が一致しません。型:{type(value).__name__} 型:{self.__annotations__[settingName].__name__}")
+        return setattr(self,settingName,value)
+    def get_setting_value(self,settingName:str)->Any:
+        """
+        設定の値を取得する。
+        """
+        if not hasattr(self,settingName):
+            raise AttributeError(f"{self.__class__.__name__}に{settingName}という属性は存在しません。")
+        return getattr(self,settingName)
